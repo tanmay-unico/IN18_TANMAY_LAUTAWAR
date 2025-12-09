@@ -77,46 +77,36 @@ If we needed to scale to 1,000 users, here's what I'd change:
 
 Here's how everything connects:
 
-```
-┌─────────────┐
-│   Browser   │
-│  (React)    │
-└──────┬──────┘
-       │ HTTP Requests
-       │
-       ▼
-┌─────────────────────────────────┐
-│      Express.js Backend         │
-│  ┌───────────────────────────┐  │
-│  │   API Endpoints           │  │
-│  │  - POST /documents/upload │  │
-│  │  - GET /documents         │  │
-│  │  - GET /documents/:id     │  │
-│  │  - DELETE /documents/:id  │  │
-│  └───────────────────────────┘  │
-│           │                      │
-│           ├──────────────────┐   │
-│           │                  │   │
-│           ▼                  ▼   │
-│  ┌──────────────┐   ┌──────────────┐
-│  │   SQLite     │   │  File System │
-│  │  Database    │   │  (uploads/)  │
-│  │              │   │              │
-│  │  documents   │   │  PDF files   │
-│  │  table       │   │              │
-│  └──────────────┘   └──────────────┘
-└─────────────────────────────────┘
-```
+**Frontend Layer:**
+- React application running in the browser
+- User interacts with UI components (upload form, document list, etc.)
+- Makes HTTP requests to backend API endpoints
+- Handles file selection, validation, and display
 
-**How it works:**
+**Backend Layer:**
+- Express.js server running on Node.js
+- Receives HTTP requests from frontend
+- API Endpoints:
+  - POST /documents/upload - Handles file uploads
+  - GET /documents - Returns list of all documents
+  - GET /documents/:id - Downloads a specific file
+  - DELETE /documents/:id - Deletes a file
+- Processes requests using middleware (multer for file uploads, cors for cross-origin)
 
-1. **Frontend (React)**: The user interacts with the React app in their browser. When they upload a file or click download, React makes HTTP requests to the backend API.
+**Data Layer:**
+- SQLite Database (documents.db):
+  - Stores document metadata (id, filename, filepath, filesize, created_at)
+  - Single table: `documents`
+  - Provides data persistence and querying
 
-2. **Backend (Express.js)**: The Express server receives these requests, processes them (validates files, queries the database, reads/writes files), and sends back responses.
+**Storage Layer:**
+- Local File System (backend/uploads/):
+  - Stores actual PDF files
+  - Files saved with unique names (timestamp + random number + original filename)
+  - Prevents filename conflicts
 
-3. **Database (SQLite)**: Stores metadata about each document - filename, filepath, size, upload date. The actual files aren't stored here, just the info about them.
-
-4. **File Storage**: The actual PDF files are saved in the `backend/uploads/` folder on the server's filesystem. Each file gets a unique name to avoid conflicts.
+**Flow:**
+- User action → React frontend → HTTP request → Express backend → Database/File System → Response → React frontend → UI update
 
 ## 3. API Specification
 
